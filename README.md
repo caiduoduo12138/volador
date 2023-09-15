@@ -2,7 +2,7 @@
 
 ## 飞鱼集群作业系统简介
 
-飞鱼集群的作业系统默认使用horovod作为分布式作业的底层调度器，来进行多机多卡的深度学习AI训练任务。对于horovod的一些核心概念与特性，请参考[这里]([Overview &#8212; Horovod documentation](https://horovod.readthedocs.io/en/stable/summary_include.html#supported-frameworks))。
+ 飞鱼集群的作业系统默认使用horovod作为分布式作业的底层调度器，来进行多机多卡的深度学习AI训练任务。对于horovod的一些核心概念与特性，请参考[这里]([Overview &#8212; Horovod documentation](https://horovod.readthedocs.io/en/stable/summary_include.html#supported-frameworks))。
 
 ## 飞鱼集群作业系统的工作流程
 
@@ -49,6 +49,8 @@ model_def.py  # 模型代码文件，需要用户按照我们的api规则进行�
 startup-hook.sh  # 依赖安装，非必需，系统可帮助生成
 ```
 
+关于使用飞鱼集群的作业系统出现的问题，我们建立了github[交流社区]([GitHub - caiduoduo12138/volador: some examples for distributed train using volador cluster](https://github.com/caiduoduo12138/volador))，欢迎提问，我们将尽力解答。
+
 # 入门
 
 ## 教程
@@ -58,7 +60,7 @@ startup-hook.sh  # 依赖安装，非必需，系统可帮助生成
 在本教程中，我们将向您展示如何将训练示例与飞鱼集群(Volador Cluster)环境集成在一起。我们将在只需要单个CPU或GPU的本地训练环境上运行我们的实验。
 
 ```
-注意:本教程以MIMST手写体识别为例，推荐给刚接触飞鱼集群作业的深度学习AI模型开发人员。
+注意:本教程以MNIST手写体识别为例，推荐给刚接触飞鱼集群作业的深度学习AI模型开发人员。
 ```
 
 代码文件在[这里]([GitHub - caiduoduo12138/test_git](https://github.com/caiduoduo12138/test_git))。
@@ -75,17 +77,17 @@ startup-hook.sh  # 依赖安装，非必需，系统可帮助生成
 
 在训练PyTorch模型时，飞鱼集群提供了一个内置的训练循环，该循环将每批训练数据馈送到train_batch函数中，该函数应该执行前向传递、反向传播并计算批处理的训练指标。此外飞鱼集群还进行日志管理和设备初始化。要将模型代码插入指定的训练循环中，需要定义执行以下任务的方法:
 
-  ·初始化模型(model)、优化器(optimizer)和学习率调度器（ LR scheduler）
+    ·初始化模型(model)、优化器(optimizer)和学习率调度器（ LR scheduler）
 
-  ·定义前向传播(forward)和反向传播(backward)的训练函数
+    ·定义前向传播(forward)和反向传播(backward)的训练函数
 
-  ·定义评估函数来计算验证数据集上的损失和其他度量
+    ·定义评估函数来计算验证数据集上的损失和其他度量
 
-  ·加载训练数据集
+    ·加载训练数据集
 
-  ·加载验证数据集
+    ·加载验证数据集
 
-然后，训练循环将自动调用这些函数进行训练循环（train loop）。这些函数应该组织到一个`trial`类中，这是一个用户定义的Python类，继承自`determined.pytorch.PyTorchTrial`。下面介绍如何编写第一个trial类，然后介绍如何使用飞鱼集群的作业系统运行训练作业。
+然后，训练循环将自动调用这些函数进行训练循环（train loop）。这些函数应该组织到一个`trial`类中，这是用户定义的Python类，继承自`determined.pytorch.PyTorchTrial`。下面介绍如何编写第一个trial类，然后介绍如何使用飞鱼集群的作业系统运行训练作业。
 
 **构建一个 `PyTorchTrial` 类**
 
@@ -433,33 +435,25 @@ def build_training_data_loader(self):
 ```
 
 ```
-
-```
-
 def build_validation_data_loader(self):
     valdir = os.path.join(self.download_directory, 'val')
     self.normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                 std=[0.229, 0.224, 0.225])
+    val_dataset = datasets.ImageFolder(
+        valdir,
+        transforms.Compose([
+            transforms.RandomResizedCrop(224),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            self.normalize,
+    ]))
 
-    val_dataset = datasets.ImageFolder(
-        valdir,
-        transforms.Compose([
-            transforms.RandomResizedCrop(224),
-            transforms.RandomHorizontalFlip(),
-            transforms.ToTensor(),
-            self.normalize,
-        ]))
-    
-    return DataLoader(
-        val_dataset, 
-
-        batch_size=self.context.get_per_slot_batch_size(), 
-        shuffle=False,
-        num_workers=self.context.get_hparam("workers", pin_memory=True)
-    )
-
-```
-
+return DataLoader(
+    val_dataset, 
+    batch_size=self.context.get_per_slot_batch_size(), 
+    shuffle=False,
+    num_workers=self.context.get_hparam("workers", pin_memory=True)
+)
 ```
 
 **训练/验证**
@@ -839,7 +833,7 @@ self.lrs1 = self.context.wrap_lr_scheduler(
 **`train_batch()`方法**
 
 ```
-注意：飞鱼集群的作业系统自动地收集不同节点(rank)上的度量值(这里指的是loss),并进行平
+注意：飞鱼集群的作业系统自动地收集不同显卡(rank)上的度量值(这里指的是loss),并进行平
 均，这不需要用户自己做。用户只需要实现前向传播和反向传播并更新优化器即可，需要更改optimizer.zero_grad()、loss.backward()和optimizer.step()。自我。Context对象将用于调用loss。向后并处理调零和步进优化器。
 ```
 
@@ -1182,9 +1176,7 @@ min_validation_period:
 
 ```
 min_checkpoint_period:
-   epochs: 2`
-min_checkpoint_period:
-   epochs: 2
+   epochs: 1
 ```
 
 ```
@@ -1206,4 +1198,70 @@ min_checkpoint_period:
 save_experiment_best: 0
 save_trial_best: 1
 save_trial_latest: 1
+```
+
+**权重存储类型**
+
+权重保存目前支持`gcs`、`s3`、`azure`和`shared_fs`，由`type`字段标识。根据所使用的类型，可能还需要其他字段。
+
+**Shared File System*
+
+最常见的类型是`shared_fs`，这种类型将权重会被保存到本地，对于飞鱼集群用户来说，推荐保存到分布式存储(`/mnt/userData/xxx`)中。用户仅需要指定`host_path`字段，使用的样例如下：
+
+```
+checkpoint_storage:
+  host_path: /mnt/userData/public/ckpt
+  save_experiment_best: 0
+  save_trial_best: 1
+  save_trial_latest: 1000000
+  type: shared_fs
+```
+
+**Google Cloud Storage**
+
+```
+checkpoint_storage:
+  type: gcs
+  bucket: <your-bucket-name>
+```
+
+**Amazon S3**
+
+权重将存储在Amazon S3或与S3兼容的对象存储(如MinIO)中，该类型需要指定`bucket`、`access_key`、`secret_key`、`prefix(非必填字段)`和`endpoint_url(非必填字段)`。
+
+**Azure Blob Storage**
+
+该类型将权重存储在微软的Azure Blob Storage中。用户需要指定字段`container`、`connection_string`、`account_url`、`credential(非必填字段)`。
+
+**超参数相关**
+
+`hyperparameters`定义了实验的超参数空间。要访问实验中超参数的值，请使用提供的方法`context.get_hparam()`。例如，可以通过调用`context.get_hparam("learning_rate")`来访问名为yaml文件中`learning_rate`的值。
+
+注意：任何实验都包含一个超参数`global_batch_size`，这参数被用来计算每个rank上的batch size(用户只需指定总的batch size即可，对于每张显卡分到的batch size，由飞鱼集群后台自动计算)。用户可以通过我们预置的函数`context.get_per_slot_batch_size()`和`context.get_global_batch_size()`来获取每个rank上的batch size大小。
+
+超参数空间由字典定义。字典中的每个键都是一个超参数的名称;关联值定义了超参数的范围。如果值是标量，则超形参是常量;否则，该值应该是一个嵌套映射。下面是一个例子：
+
+```
+hyperparameters:
+  global_batch_size: 64
+  optimizer_config:
+    optimizer:
+      type: categorical
+      vals:
+        - SGD
+        - Adam
+        - RMSprop
+    learning_rate:
+      type: log
+      minval: -5.0
+      maxval: 1.0
+      base: 10.0
+  num_layers:
+    type: int
+    minval: 1
+    maxval: 3
+  layer1_dropout:
+    type: double
+    minval: 0.2
+    maxval: 0.5
 ```
