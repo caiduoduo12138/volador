@@ -169,7 +169,7 @@ def __init__(self, context: PyTorchTrialContext):
 
 **加载数据**
 
-接下来需要定义的两个方法是`build_training_data_loader`和`build_validation_data_loader`。飞鱼集群的作业系统分别使用这些方法来加载训练和验证数据集。这两个方法都应该返回一个类似于`torch.utils.data.DataLoader`的数据加载器 。
+需要定义的方法是`build_training_data_loader`和`build_validation_data_loader`。飞鱼集群的作业系统分别使用这些方法来加载训练和验证数据集。这两个方法都应该返回一个类似于`torch.utils.data.DataLoader`的数据加载器 。
 
 ```
 def build_training_data_loader(self):
