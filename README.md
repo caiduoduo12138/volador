@@ -1089,7 +1089,7 @@ single代表普通试验，不进行超参数搜索，仅需指定`max_length`�
 
     ·对于一些需要经常调整的超参数(例如，学习率，阈值等)，建议放在实验配置文件`.yaml`中，方便进行调整。可以在模型代码文件`model_def.py`中通过`context.get_hparam_()`方法获取对应的值。
 
-    ·对于分布式镜像中确实的依赖，可以通过生成`startup-hook.sh`文件安装。
+    ·对于分布式镜像中缺失的依赖，可以通过生成`startup-hook.sh`文件安装。
 
 # 参考
 
@@ -1130,7 +1130,7 @@ searcher:
 
 **实验信息相关**
 
-`name`:用户自定义的实验名称；
+`name`:用户自定义的实验名称；必填字段；
 
 `description`:用户对实验的描述。非必填字段；
 
@@ -1144,7 +1144,7 @@ searcher:
 
 **作业入口地址**
 
-`entrypoint`:该字段定义了需要运行何种作业。一般格式为文件名:类名的格式
+`entrypoint`:该字段定义了需要运行何种作业。一般格式为文件名:类名的格式。必填字段。
 
 `<model_file>:<object_class>`，例如，`model_def:MyTrial`。完成定义后，飞鱼集群的作业系统会找到该文件下的类，进行分布式多机多卡任务。
 
@@ -1154,7 +1154,7 @@ searcher:
 
 `records_per_epoch`:通俗地来说就是训练集中的图片数量，飞鱼集群的作业系统需要明确该数值，来确定一个epoch的迭代次数。该字段仅在指定训练时长为`epoch`时出现，对于`batches`则不需要进行设置。用户根据需要确定是否需要该字段；
 
-`max_restarts`:该字段定义了作业的重启次数，默认值为`5`。当一个作业失败时(网络波动等原因造成)，飞鱼集群的作业系统会尝试重新提交作业。用户可按照需要设置该值，当用户熟悉飞鱼集群的作业系统时，建议将该值设为0或者1。
+`max_restarts`:该字段定义了作业的重启次数，默认值为`5`。当一个作业失败时(网络波动等原因造成)，飞鱼集群的作业系统会尝试重新提交作业。用户可按照需要设置该值，当用户熟悉飞鱼集群的作业系统时，建议将该值设为0或者1，非必填字段。
 
 **模型验证相关**
 
@@ -1184,7 +1184,7 @@ min_checkpoint_period:
    batches: 1000
 ```
 
-`checkpoint_storage`:模型权重的保存路径；
+`checkpoint_storage`:模型权重的保存路径。必填字段；
 
 `save_experiment_best`:保存所有试验中最佳试验权重的数目，用metric来判断。非必填字段；
 
@@ -1265,3 +1265,173 @@ hyperparameters:
     minval: 0.2
     maxval: 0.5
 ```
+
+这里开始介绍yaml中超参数的常见数据类型：
+
+**Integer**
+
+`int`是一个整型变量。变量的最小值和最大值分别由`minval`和`maxval`定义(值域范围包括两个端点)。最大值和最小值一般在超参数搜索中使用，用户根据自身需求，确定是否需要定义。
+
+在进行网格搜索时，还必须指定`count`字段;这定义了这个超参数在网格中的点数。根据该字段均匀划分值域中的离散值。
+
+**Double**
+
+`double`是一个浮点型变量。变量的最小值和最大值分别由`minval`和`maxval`定义(值域范围包括两个端点)。最大值和最小值一般在超参数搜索中使用，用户根据自身需求，确定是否需要定义。
+
+在进行网格搜索时，还必须指定`count`字段。根据该字段均匀划分值域中的离散值。
+
+**Log**
+
+`log`是一个对数尺度的变量，它的底数由`base`字段指定。最大值和最小值一般在超参数搜索中使用，用户根据自身需求，确定是否需要定义。
+
+在进行网格搜索时，还必须指定`count`字段。根据该字段均匀划分值域中的离散值。
+
+**Categorical**
+
+`categorical`是一个特殊的类型，类似于特定值的集合。它的值由`val`字段定义。它存放的类型可以是任何有效的yaml类型，例如bool、string、number、collection。
+
+**Searcher**
+
+`searcher`字段定义了是否进行超参数搜索，以及搜索超参数的方式。如果不进行超参数搜索，请指定为`single`类型。若用户需要进行超参数搜索，飞鱼集群的作业系统提供了3种不同的超参数搜索方式:`adaptive_asha`、`random`和`grid`方法。
+
+要使用的超参数搜索方式的名称通过`name（必填字段）`字段配置，其余字段配置搜索器的行为，并取决于所使用的搜索器。例如，要配置一个随机超参数搜索，进行5次试验，每个试验迭代1000次:
+
+```
+searcher:
+  name: random
+  metric: accuracy
+  max_trials: 5
+  max_length:
+    batches: 1000
+```
+
+**Single**
+
+`single`不进行超参数搜索，是最常用的方式。在该模式下，所有的超参数必须为常量，不可进行范围定义。
+
+`metric`:用于评估模型性能的度量指标。一般来自`model_def.py`中`evaluate_batch()`方法中return的字典中的key。必填字段。
+
+`max_length`:实验的训练时长。一般指定为epochs或者batches。必填字段。
+
+```
+max_length:
+   epochs: 2
+```
+
+如果在指定为`epochs`，`records_per_epoch`字段必须被指定。
+
+`smaller_is_better`:是否最小化或者最大化度量指标，默认值为`true`。一般对于loss来说，指定为`true`，对精度来说指定为`false`。非必填字段。
+
+**Random**
+
+`random`实现了一个简单的随机参数搜索。该方法从超参数空间中随机采样。每个试验都按照指定的长度进行训练，然后计算验证指标。
+
+`metric`:用于评估模型性能的度量指标。一般来自`model_def.py`中`evaluate_batch()`方法中return的字典中的key。必填字段。
+
+`max_trials`:最大实验次数。必填字段。
+
+`max_length`::实验的训练时长。一般指定为epochs或者batches。必填字段。
+
+```
+max_length:
+   batches: 2
+```
+
+`smaller_is_better`:是否最小化或者最大化度量指标，默认值为`true`。一般对于loss来说，指定为`true`，对精度来说指定为`false`。非必填字段。
+
+`max_concurrent_trials`:最大并行试验数目，默认为`16`。当该值被设置为`0`，飞鱼集群的作业系统会尽可能地同时启动多个试验。非必填字段。
+
+**Grid**
+
+`grid`方法应用网格进行搜索。
+
+`metric`:用于评估模型性能的度量指标。一般来自`model_def.py`中`evaluate_batch()`方法中return的字典中的key。必填字段。
+
+`max_length`::实验的训练时长。一般指定为epochs或者batches。必填字段。
+
+```
+max_length:
+   epochs: 12
+```
+
+如果在指定为`epochs`，`records_per_epoch`字段必须被指定。
+
+`smaller_is_better`:是否最小化或者最大化度量指标，默认值为`true`。一般对于loss来说，指定为`true`，对精度来说指定为`false`。非必填字段。
+
+`max_concurrent_trials`:最大并行试验数目，默认为`16`。当该值被设置为`0`，飞鱼集群的作业系统会尽可能地同时启动多个试验。非必填字段。
+
+**Adaptive ASHA**
+
+`metric`:用于评估模型性能的度量指标。一般来自`model_def.py`中`evaluate_batch()`方法中return的字典中的key。必填字段。
+
+`max_length`::实验的训练时长。一般指定为epochs或者batches。必填字段。
+
+```
+max_length:
+   epochs: 2
+```
+
+`max_trials`:最大实验次数。必填字段。
+
+`smaller_is_better`:是否最小化或者最大化度量指标，默认值为`true`。一般对于loss来说，指定为`true`，对精度来说指定为`false`。非必填字段。
+
+`mode`:该字段用来指定何时结束搜索并停止试验。有三种模式`agressive`，`standard`和`conservative`，默认值为`standard`且推荐该方式。
+
+`max_concurrent_trials`:最大并行试验数目，默认为`16`。当该值被设置为`0`，飞鱼集群的作业系统会尽可能地同时启动多个试验。非必填字段。
+
+**Resource**
+
+`resource`这一部分定义了适应使用的资源。
+
+`slots_per_trial`:飞鱼集群作业调度的显卡总数，为了合理地利用算力资源，仅允许整机调度，并且显卡型号要一致(同时为4090，否则会出现短板效应，造成算力浪费)。对于配备8卡A100的机器来说，即仅设置该值为8、16、32以及其他8的公倍数(不要超出集群可调用的总的显卡数目)。必填字段。
+
+`shm_size`:作业运行时容器的共享内存。默认值为`4294967296`(4GB)，用户根据需要进行调整，也可直接设置为`128M`或者`1.5G`。必填字段。
+
+`resource_pool`:使用的显卡资源池，如果没有指定资源池，将使用默认的GPU资源。
+
+**Bind Mounts**
+
+`bind_mounts`:定义了作业运行时容器中需要挂载的目录，一般为数据集挂载路径。对于飞鱼集群的作业系统来说，推荐将数据集放在分布式存储中，也支持NFS挂载。用户需要保证所有节点的机器都可以访问到该路径。非必填字段。
+
+`host_path`:文件系统路径，推荐使用飞鱼集群的分布式存储系统。非必填。
+
+`container_path`:运行作业的容器内部挂载路径，推荐使用绝对路径，不允许挂载到容器内部的工作路径。推荐挂载到`/mnt`或者`/data`路径下。非必填字段。
+
+`read_only`:是否为只读模式，默认为`false`。非必填字段。
+
+```
+bind_mounts:
+  - host_path: /data
+    container_path: /data
+  - host_path: /mnt/read-only-data
+    container_path: /mnt/read-only-data
+    read_only: true
+```
+
+```
+bind_mounts:
+  - host_path: /data
+    container_path: /data
+```
+
+**Environment**
+
+`environment`这部分用于配置作业容器的环境。
+
+`image`:飞鱼集群使用的分布式作业镜像。默认使用tag为`cuda-11.3-pytorch-1.12-tf-2.11-gpu-0.24.0`的镜像。用户可以根据需要从我们预置的分布式作业镜像仓库选择镜像，来适配不同的需求。非必填字段。
+
+注意:可以通过`startup-hook.sh`增加或删除环境依赖。但是，如果在`startup-hook.sh`中重新安装pytorch，请重新编译安装horovod。我们不推荐这样的方式，这会导致作业的未知错误。
+
+`force_pull_image`:是否从dockerhub拉取镜像，默认值为`false`。非必填字段。
+
+`registrt_auth`:用户可从dockerhub拉取自定义镜像。非必填字段。若使用需要指定以下字段:
+
+    ·`username`
+
+    ·`password`
+
+    ·`serveraddress`
+
+`environment_variables`:环境变量。使用格式为`NAME=VALUE`。
+
+`experiment_seed`:实验随机种子，默认会随机初始化值。值的范围在0到2^31-1之间。
