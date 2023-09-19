@@ -1,6 +1,6 @@
 ﻿# 
 
-# ![](imgs/log.png)
+# <img src="imgs/log.png" title="" alt="" data-align="center">
 
 # 核心概念
 
@@ -18,7 +18,7 @@
 
 飞鱼集群的作业系统涉及到3个文件，至少需要`2`个相关文件才可以运行。以faster-rcnn为例，完整的代码工程在[这里](https://github.com/caiduoduo12138/volador/blob/master/examples/faster-rcnn-test-ddp.zip)。如下图：
 
-![](imgs/2023-09-20-17-20-image.png)
+<img src="imgs/2023-09-20-17-20-image.png" title="" alt="" data-align="center">
 
 `distributed.yaml`是实验的配置文件，`model_def.py`是模型代码文件，这两个文件是必要的。`startup-hook.sh`是一个shell脚本，用来配置缺失的一些环境依赖，例如在该文件中写`pip install xxx`, `apt-get install xxx`。当您选择的镜像并不缺失您所需要的依赖时，该文件不是必要的。
 
@@ -28,15 +28,15 @@
 
 这里介绍如何使用飞鱼集群的作业系统生成所需的文件。`distributed.yaml`通过如下界面生成，单击确定后，系统会自动生成该配置文件。
 
-![](imgs/2023-09-14-10-52-03-image.png)
+<img src="imgs/2023-09-14-10-52-03-image.png" title="" alt="" data-align="center">
 
 `model_def.py`是需要用户自己编写(具体编写规则请参考下文)，我们在训练代码路径包含到该文件的位置，即代码工程位置（另外两个文件与它也需要在同一个层级），如图：
 
-![](imgs/2023-09-14-11-13-27-image.png)
+<img src="imgs/2023-09-14-11-13-27-image.png" title="" alt="" data-align="center">
 
 `startup-hook.sh`通过如下界面生成：
 
-![](imgs/2023-09-14-11-15-25-image.png)
+<img src="imgs/2023-09-14-11-15-25-image.png" title="" alt="" data-align="center">
 
 ```
 注意：数据集请不要放在代码工程文件下，建议使用挂载的方式，对应distributed.yaml中的
@@ -71,9 +71,9 @@ startup-hook.sh  # 依赖安装，非必需，系统可帮助生成
 
 在文件管理下解压代码文件，路径为`/public/mnist-test-ddp`。填写的信息如下：
 
-![](imgs/2023-09-18-19-56-image.png)
+<img src="imgs/2023-09-18-19-56-image.png" title="" alt="" data-align="center">
 
-![](imgs/2023-09-18-20-14-image.png)
+<img src="imgs/2023-09-18-20-14-image.png" title="" alt="" data-align="center">
 
 完成填写后，点击确定，提交作业。
 
