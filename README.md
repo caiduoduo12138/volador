@@ -18,7 +18,7 @@
 
 飞鱼集群的作业系统涉及到3个文件，至少需要`2`个相关文件才可以运行。以faster-rcnn为例，完整的代码工程在[这里](https://github.com/caiduoduo12138/volador/blob/master/examples/faster-rcnn-test-ddp.zip)。如下图：
 
-![](imgs/2023-09-14-10-26-45-image.png)
+![](C:\Users\user\Desktop\作业文档\imgs\2023-09-20-17-20-image.png)
 
 `distributed.yaml`是实验的配置文件，`model_def.py`是模型代码文件，这两个文件是必要的。`startup-hook.sh`是一个shell脚本，用来配置缺失的一些环境依赖，例如在该文件中写`pip install xxx`, `apt-get install xxx`。当您选择的镜像并不缺失您所需要的依赖时，该文件不是必要的。
 
