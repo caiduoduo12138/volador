@@ -1,6 +1,8 @@
 ﻿# 
 
-# ![](C:\Users\user\Desktop\作业文档\imgs\log.png)核心概念
+# ![](C:\Users\user\Desktop\作业文档\imgs\log.png)
+
+# 核心概念
 
 ## 飞鱼集群作业系统简介
 
