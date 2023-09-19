@@ -71,9 +71,9 @@ startup-hook.sh  # 依赖安装，非必需，系统可帮助生成
 
 在文件管理下解压代码文件，路径为`/public/mnist-test-ddp`。填写的信息如下：
 
-![](C:\Users\user\Desktop\作业文档\imgs\2023-09-18-19-56-image.png)
+![](imgs/2023-09-18-19-56-image.png)
 
-![](C:\Users\user\Desktop\作业文档\imgs\2023-09-18-20-14-image.png)
+![](imgs/2023-09-18-20-14-image.png)
 
 完成填写后，点击确定，提交作业。
 
