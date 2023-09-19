@@ -8,7 +8,7 @@
 
 ## 指定MMDetection的配置文件
 
-以我们提供的示例文件[fasterrcnn.yaml](https://github.com/caiduoduo12138/volador/blob/master/examples/mmdetection.zip)文件为例，用户可以通过更改yaml中的字段`config_file`来选择mmdetection的配置文件。运行作业的容器中，mmdetetion的目录被配置在`/mmdetection`下例如：
+以我们提供的示例文件[fasterrcnn.yaml](https://github.com/caiduoduo12138/volador/blob/master/examples/mmdetection/fasterrcnn.yaml)文件为例，用户可以通过更改yaml中的字段`config_file`来选择mmdetection的配置文件。运行作业的容器中，mmdetetion的目录被配置在`/mmdetection`下例如：
 
 ```
 hyperparameters:
@@ -37,5 +37,3 @@ hyperparameters:
 `global_batch_size`必须被指定，用来创建实验。如果你想与mmdetection配置文件中的设置保持一致，请修改配置文件。用户可进作业镜像进行修改，例如，增加自定义数据集、设置新的模块结构等(不推荐刚使用mmdetection和不熟悉飞鱼集群作业镜像的用户进行该操作，以防止不可预知的错误)。
 
 更多mmdetection的用法请参考[官方文档](https://mmdetection.readthedocs.io/en/latest/)。
-
-
