@@ -1,8 +1,10 @@
-﻿# 核心概念
+﻿# 
+
+# ![](C:\Users\user\Desktop\作业文档\imgs\log.png)核心概念
 
 ## 飞鱼集群作业系统简介
 
- 飞鱼集群的作业系统默认使用horovod作为分布式作业的底层调度器，来进行多机多卡的深度学习AI训练任务。对于horovod的一些核心概念与特性，请参考[这里]([Overview &#8212; Horovod documentation](https://horovod.readthedocs.io/en/stable/summary_include.html#supported-frameworks))。
+ 飞鱼集群的作业系统默认使用horovod作为分布式作业的底层调度器，来进行多机多卡的深度学习AI训练任务。对于horovod的一些核心概念与特性，请参考[这里](https://horovod.readthedocs.io/en/stable/summary_include.html#supported-frameworks)。
 
 ## 飞鱼集群作业系统的工作流程
 
@@ -637,11 +639,11 @@ yaml配置文件类似于pytorch示例，关于实验配置文件yaml中的更�
 
 飞鱼集群内部集成了mmdetection框架。
 
-### mmdetection
+### MMDetection
 
-[mmdetection](https://github.com/open-mmlab/mmdetection)是商汤和港中文大学针对目标检测任务推出的一个开源项目，它基于Pytorch实现了大量的目标检测算法，把数据集构建、模型搭建、训练策略等过程都封装成了一个个模块，通过模块调用的方式，我们能够以很少的代码量实现一个新算法，大大提高了代码复用率。
+[MMDetection](https://github.com/open-mmlab/mmdetection)是商汤和港中文大学针对目标检测任务推出的一个开源项目，它基于Pytorch实现了大量的目标检测算法，把数据集构建、模型搭建、训练策略等过程都封装成了一个个模块，通过模块调用的方式，我们能够以很少的代码量实现一个新算法，大大提高了代码复用率。
 
-飞鱼集群对其进行封装，通过编写的中间件对其进行调用。如果您对mmdetection有一定了解，可以非常快地上手。如果您符合以下情况，那么该功能将会很方便您的工作：
+飞鱼集群对其进行封装，通过编写的中间件对其进行调用。如果您对MMDetection有一定了解，可以非常快地上手。如果您符合以下情况，那么该功能将会很方便您的工作：
 
 - 您希望使用功能强大的集成框架执行目标检测，该框架可以轻松地根据需求进行扩展。
 
