@@ -1254,6 +1254,8 @@ checkpoint_storage:
 
 `hyperparameters`定义了实验的超参数空间。要访问实验中超参数的值，请使用提供的方法`context.get_hparam()`。例如，可以通过调用`context.get_hparam("learning_rate")`来访问名为yaml文件中`learning_rate`的值。
 
+- `global_batch_size`:总的batch size大小，即用该数值平均分配到每张卡上。需要保证该数值可被分配的卡数整除。
+
 ```
 注意：任何实验都包含一个超参数global_batch_size，这参数被用来计算每个rank上的batch
  size(用户只需指定总的batch size即可，对于每张显卡分到的batch size，由飞鱼集群后台
