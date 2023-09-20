@@ -353,7 +353,7 @@ hyperparameters: #超参数
     momentum: 0.9
     weight_decay: 1e-4
     pretrained: True
-records1281167epoch: 12181167 # imagenet数据集中训练集的图片数量
+records_per_epoch: 12181167 # imagenet数据集中训练集的图片数量
 searcher:
     name: single # 不使用超参数搜索
     metric: acc # 验证集指标
