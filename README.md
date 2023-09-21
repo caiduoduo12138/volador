@@ -86,7 +86,7 @@ startup-hook.sh  # 依赖安装，非必需，系统可帮助生成
 注意:本教程以MNIST手写体识别为例，推荐给刚接触飞鱼集群作业的深度学习AI模型开发人员。
 ```
 
-代码文件在[这里](https://github.com/caiduoduo12138/test_git)。飞鱼集群的作业系统至少需要两个文件，一个`.yaml`（用来配置作业的相关信息），一个`.py`文件（用来定义模型结构、数据集、优化器等深度学习中常用的相关信息）。
+代码文件在[这里](https://github.com/caiduoduo12138/volador/blob/master/examples/mnist_test.zip)。飞鱼集群的作业系统至少需要两个文件，一个`.yaml`（用来配置作业的相关信息），一个`.py`文件（用来定义模型结构、数据集、优化器等深度学习中常用的相关信息）。
 
 在文件管理下解压代码文件，路径为`/public/mnist-test-ddp`。填写的信息如下：
 
