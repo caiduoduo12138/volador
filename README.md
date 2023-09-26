@@ -59,7 +59,7 @@
 
 ```
 注意：数据集请不要放在代码工程文件下，建议使用挂载的方式，对应distributed.yaml中的
-bin_mounts字段。
+bind_mounts字段。
 ```
 
 ### 总结
