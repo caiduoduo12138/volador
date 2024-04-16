@@ -6,7 +6,7 @@
 
 ## 飞鱼集群作业系统简介
 
- 飞鱼集群的作业系统默认使用horovod作为分布式作业的底层调度器，来进行多机多卡的深度学习AI训练任务。对于horovod的一些核心概念与特性，请参考[这里](https://horovod.readthedocs.io/en/stable/summary_include.html#supported-frameworks)。
+飞鱼集群的作业系统支持单机多卡，多机多卡作业调度。在飞鱼集群中，作业是指用户自定义的、具有生命周期的进程。作业完成后，进程结束并且自动释放资源。飞鱼集群的作业系统包含单机作业与多机作业。单机作业使用shell命令进行调度，而多机作业使用horovod作为默认的分布式底层调度器，来进行多机多卡的深度学习AI训练任务。对于horovod的一些核心概念与特性，请参考[这里](https://horovod.readthedocs.io/en/stable/summary_include.html#supported-frameworks)。
 
 ## 飞鱼集群作业系统的工作流程
 
@@ -34,7 +34,7 @@
 
 <img src="imgs/2023-09-20-17-20-image.png" title="" alt="" data-align="center">
 
-`distributed.yaml`是实验的配置文件，`model_def.py`是模型代码文件，这两个文件是必要的。`startup-hook.sh`是一个shell脚本，用来配置缺失的一些环境依赖，例如在该文件中写`pip install xxx`, `apt-get install xxx`。当您选择的镜像并不缺失您所需要的依赖时，该文件不是必要的。
+`distributed.yaml`是实验的配置文件，`model_def.py`是模型代码文件（单机作业非必须），这两个文件在多机作业中是必要的。`startup-hook.sh`是一个shell脚本，用来配置缺失的一些环境依赖，例如在该文件中写`pip install xxx`, `apt-get install xxx`。当您选择的镜像并不缺失您所需要的依赖时，该文件不是必要的。
 
 对于代码工程中的其他文件，是用户自己的深度学习代码，或者github等代码仓库下载得到。用户想提交飞鱼集群的作业时，仅需要增加上述所需的几个文件即可。一些常见的用法在[imagenet](https://github.com/caiduoduo12138/volador/blob/master/examples/imagenet-r50-test-ddp.zip)工程中。
 
@@ -72,9 +72,60 @@ model_def.py  # 模型代码文件，需要用户按照我们的api规则进行�
 startup-hook.sh  # 依赖安装，非必需，系统可帮助生成
 ```
 
-关于使用飞鱼集群的作业系统出现的问题，我们建立了github[交流社区](https://github.com/caiduoduo12138/volador)，欢迎提问，我们将尽力解答。
+# 单机作业
 
-# 入门
+本节介绍了飞鱼集群的单机作业，我们将展示如何提交一个单机作业。用户需要选择调度的GPU卡数(不可超过单台物理机的GPU卡数上限)，选择镜像等就可以进行作业提交。单机作业系统提供了一个入口`entrypoint`，用户需要提供一个可执行的shell命令，例如`python train.py`、`mkdir /mnt/volume/userdata/`等。
+
+## 单机作业简易教程
+
+这里我们将详细地介绍飞鱼集群的单机作业系统。单机作业通过将GPU物理卡挂载进入容器，实现gpu的分配。完成显卡挂载后，在容器内部执行用户提供的shell命令，执行完后删除容器并释放物理资源。下面是单机作业的界面：
+
+<img src="imgs/2024-04-16_095621.png" title="" alt="" data-align="center">
+
+下面是单机作业的一些参数说明：
+
+```
+GPU数量    #用户本次单机作业需要使用的GPU数量，即挂载进容器的gpu卡数
+镜像    #用户选择的单机作业镜像
+挂载    #用户可将飞鱼集群的存储挂载到容器内部，一般用于数据集挂载
+entrypoint    #用户所需执行的shell命令,例如python xxx.py, mkdir xxx等
+训练代码路径    #用户上传的代码路径，即打开terminal的绝对路径，并在该路径下执行entrypoint 
+依赖环境安装命令    #用户追加的环境依赖。例如pip install xxx
+```
+
+用户根据需要选择`GPU数量`和适合的`镜像`，对于我们提供的模板镜像，若有缺失的环境可以通过`依赖环境安装命令`进行补充。由于训练代码一般不放大型数据集，用户若有数据，推荐使用我们的`挂载`系统，将分布式存储(即用户的文件管理)挂载到容器内部，并在自己的代码中指定相关的数据路径即可。对于`entrypoint`，系统默认的执行路径是`训练代码路径`，即在该路径下打开terminal并运行`entrypoint`的shell命令。
+
+关于`挂载`，是飞鱼提供的一种文件持久化的方式，目的是让用户挂载一些数据到容器中，或者保存一些中间文件(作业结束后需要保存的文件)。如需要写操作，请不要使用`ReadOnly`。`host`是文件管理的路径，`container`是容器中需要配置的目录。例如，假设将文件管理的`/mnt/volume/userdata/usr1`挂载到容器内部的`/mnt/data`。用户只需要将文件保存到`/mnt/data`下，则飞鱼的文件管理系统中的`/mnt/volume/userdata/usr1`下会存在相关的保存文件，而不会在作业结束，释放资源后消失。
+
+### 单机作业举例
+
+这是一个目标检测的代码工程，假设用户的代码工程结构如下：
+
+<img src="imgs/2024-04-16-10-44-30-image.png" title="" alt="" data-align="center">
+
+`python train.py`是用户要执行的训练命令。我们将这个工程使用飞鱼集群单机作业执行，用户需要按照如下步骤：
+
+```
+1. 用户通过飞鱼的文件管理上传代码文件，记录工程路径为path1，将数据集上传到飞鱼集群的文件管理，记录数据路径为dir2；
+2. 用户根据需要选择镜像，GPU卡数量，补充环境依赖；
+3. 用户将数据集path2挂载到容器内部，例如path2挂载到path3；；
+4. 用户将自己代码中的数据集读取的路径更换为apth3
+5. 用户在entrypoint中写入python train.py并点击提交作业，作业将在path1下执行命令。
+```
+
+### 单机作业注意事项
+
+- 训练代码路径的容量一般为99M，用户的一些大文件可以通过挂载的方式。
+
+- 对于一些非深度学习的任务，单机作业只分配资源，用户可以自定义执行的shell命令，并在执行完命令后释放资源。
+
+- 由于单机作业执行完会释放资源，相关的中间文件用户若需保存，请指定飞鱼集群的分布式存储，即挂载进容器的目录进行保存。
+
+- 由于单机作业我们不对用户的代码进行限制，所以相关的作业可视化功能不可用。
+
+- 对于一些了解多机多卡的用户，其实飞鱼集群的单机作业系统也可以执行多机作业。
+
+# 多机作业入门
 
 ## 教程
 
@@ -1246,11 +1297,11 @@ save_trial_latest: 1
 
 #### Shared File System
 
-最常见的类型是`shared_fs`，这种类型将权重保存到本地，对于飞鱼集群用户来说，推荐保存到分布式存储(`/mnt/userData/xxx`)中。用户仅需要指定`host_path`字段，使用的样例如下：
+最常见的类型是`shared_fs`，这种类型将权重保存到本地，对于飞鱼集群用户来说，推荐保存到分布式存储(`/mnt/volume/userdata/xxx`)中。用户仅需要指定`host_path`字段，使用的样例如下：
 
 ```
 checkpoint_storage:
-  host_path: /mnt/userData/public/ckpt
+  host_path: /mnt/volume/userdata/public/ckpt
   save_experiment_best: 0
   save_trial_best: 1
   save_trial_latest: 1000000
@@ -1492,7 +1543,7 @@ bind_mounts:
 
 - 作业调度的最小单位是一个节点，也就是一整台主机，对于仅使用单机多卡作业的用户来说，推荐使用容器模式。若用户熟悉分布式作业框架，我们在容器镜像中提供了一些镜像。用户可通过启动多个容器来进行分布式训练。
 
-- 飞鱼集群的作业系统使用的工程文件夹有大小限制，建议将数据集通过挂载的方式，挂载到作业容器内部，对应使用`bind_mounts`字段。飞鱼集群的作业系统的挂载目录一般为分布式存储，路径为`/mnt/userData/xxx`，用户在文件管理时`/mnt/userData/`被隐藏，使用高级模式添加挂载路径时，需要加上该前缀。
+- 飞鱼集群的作业系统使用的工程文件夹有大小限制，建议将数据集通过挂载的方式，挂载到作业容器内部，对应使用`bind_mounts`字段。飞鱼集群的作业系统的挂载目录一般为分布式存储，路径为`/mnt/volume/userdata/xxx`，用户在文件管理时`/mnt/volume/userdata/`被隐藏，使用高级模式添加挂载路径时，需要加上该前缀。
 
 - 经常需要修改的超参数建议放在yaml中，以便进行修改并重启作业。
 
