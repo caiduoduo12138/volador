@@ -28,9 +28,13 @@
 
 ## 飞鱼集群作业引导
 
+### 说明
+
+飞鱼集群的作业分为单机作业和多机作业，通过提交一个yaml文件，进行作业配置。对于单机作业，用户对yaml是无感知的，仅需参考下方的<mark>单机作业</mark>小节进行作业提交。对于多机作业，我们提供了相关的api说明，用户需要仔细阅读文档。
+
 ### 所需文件
 
-飞鱼集群的作业系统涉及到3个文件，至少需要`2`个相关文件才可以运行。以faster-rcnn为例，完整的代码工程在[这里](https://github.com/caiduoduo12138/volador/blob/master/examples/faster-rcnn-test-ddp.zip)。如下图：
+飞鱼集群的作业系统涉及到3个文件，多机作业至少需要2个相关文件才可以运行，单机作业仅需1个yaml文件。以faster-rcnn为例，完整的代码工程在[这里](https://github.com/caiduoduo12138/volador/blob/master/examples/faster-rcnn-test-ddp.zip)。如下图：
 
 <img src="imgs/2023-09-20-17-20-image.png" title="" alt="" data-align="center">
 
