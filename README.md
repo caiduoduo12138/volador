@@ -127,7 +127,9 @@ entrypoint    #用户所需执行的shell命令,例如python xxx.py, mkdir x
 
 - 由于单机作业我们不对用户的代码进行限制，所以相关的作业可视化功能不可用。
 
-- 对于一些了解多机多卡的用户，其实飞鱼集群的单机作业系统也可以执行多机作业。
+- 对于一些了解多机多卡的用户，其实飞鱼集群的单机作业系统也可以执行多机作业。例如使用torchrun，用户可通过shell命令获取ip并设置为环境变量，然后在torchrun中指定，按照需要起多个单机作业形成多机作业。（torchrun只需指定master节点的ip）
+
+- 对于自己制作的单机作业镜像，安装其他依赖时，不要破坏飞鱼所提供的原本文件结构以及依赖（一般来说不会）。不要在entrypoint填写不规范的shell命令，这会可能会导致作业卡死或者报错。若用户安装anaconda，尽量不要使用conda activate命令。（conda activate命令写在shell脚本文件中可能导致不兼容，这与飞鱼集群无关，解决方案可以使用xxx/.../anaconda/envs/xxx/bin/python执行，或者尝试使用source activate）
 
 # 多机作业入门
 
